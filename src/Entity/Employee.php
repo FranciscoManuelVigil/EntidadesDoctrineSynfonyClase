@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\EmployeeRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -25,6 +27,17 @@ class Employee
 
     #[ORM\Column]
     private ?bool $isActive = null;
+
+    /**
+     * @var Collection<int, Task>
+     */
+    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'creator', orphanRemoval: true)]
+    private Collection $creator_task;
+
+    public function __construct()
+    {
+        $this->creator_task = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -75,6 +88,36 @@ class Employee
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Task>
+     */
+    public function getCreatorTask(): Collection
+    {
+        return $this->creator_task;
+    }
+
+    public function addCreatorTask(Task $creatorTask): static
+    {
+        if (!$this->creator_task->contains($creatorTask)) {
+            $this->creator_task->add($creatorTask);
+            $creatorTask->setCreator($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatorTask(Task $creatorTask): static
+    {
+        if ($this->creator_task->removeElement($creatorTask)) {
+            // set the owning side to null (unless already changed)
+            if ($creatorTask->getCreator() === $this) {
+                $creatorTask->setCreator(null);
+            }
+        }
 
         return $this;
     }
